@@ -8,13 +8,14 @@ Dobby is multi purpose discord bot for complete server management and music syst
 - Play music with link
 - Change Nicknames
 - Few text commands
-
-## Developing Features
-
 - Play music with query.
 - Play view queue.
-- Remove from queue.
 - Skip music.
+
+## Developing Features
+- Remove from queue.
+
 - Play music playlist.
 - Handle server moderations (kick,ban,mute).
+
 
