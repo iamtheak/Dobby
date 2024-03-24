@@ -12,13 +12,11 @@
     <PackageReference Include="DSharpPlus" Version="4.4.6" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.6" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.6" />
-    <PackageReference Include="DSharpPlus.Lavalink" Version="4.4.6" />
     <PackageReference Include="DSharpPlus.SlashCommands" Version="4.4.6" />
     <PackageReference Include="DSharpPlus.VoiceNext" Version="4.4.6" />
     <PackageReference Include="DSharpPlus.VoiceNext.Natives" Version="1.0.0" />
-    <PackageReference Include="Google.Apis.YouTube.v3" Version="1.66.0.3330" />
     <!--<PackageReference Include="Lavalink4NET.Abstractions" Version="4.0.11" />-->
-    <PackageReference Include="Lavalink4NET.DSharpPlus" Version="4.0.12-beta.7" />
+    <PackageReference Include="Lavalink4NET.DSharpPlus" Version="4.0.13" />
     <!--<PackageReference Include="Lavalink4NET.Integrations.Lavasearch" Version="4.0.11" />
     <PackageReference Include="Lavalink4NET.Rest" Version="4.0.11" />-->
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />

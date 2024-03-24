@@ -1,24 +1,25 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Dobby.Commands;
+﻿using Dobby.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using DSharpPlus.VoiceNext;
+using DSharpPlus.SlashCommands;
 using Lavalink4NET;
-using Lavalink4NET.Clients;
-using Lavalink4NET.DSharpPlus;
 using Lavalink4NET.Extensions;
-using Lavalink4NET.Players;
-using Lavalink4NET.Players.Queued;
-using Lavalink4NET.Rest.Entities.Tracks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+
+
+
+// Host Application Builder
 var builder = new HostApplicationBuilder(args);
+
+
+
+// Configuration builder for appsettings and user secrets
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -37,16 +38,23 @@ builder.Services.AddSingleton<DiscordClient>();
 builder.Services.AddSingleton(new DiscordConfiguration { Token = token, Intents = DiscordIntents.All,TokenType = TokenType.Bot}); // Put token here
 
 
-
+builder.Services.AddSingleton<TextCommands>();
+builder.Services.AddSingleton<VoiceCommands>();
 builder.Services.AddLavalink();
 builder.Services.ConfigureLavalink(config =>
 {
     config.Label = "Lavalink";
+    // config.BaseAddress = new Uri("https://f1ca39dd-9874-4eb6-95b4-87f98b207461-00-21h6gpzbthny.picard.replit.dev") ;
     config.Passphrase = "satanwantsmore";
     config.ResumptionOptions = new LavalinkSessionResumptionOptions(TimeSpan.FromSeconds(15));
     config.ReadyTimeout = TimeSpan.FromSeconds(15);
 });
 
+
+builder.Services.AddSingleton<SlashCommandsConfiguration>(new SlashCommandsConfiguration()
+{
+    Services = builder.Services.BuildServiceProvider()
+});
 builder.Services.AddSingleton<CommandsNextConfiguration>(new CommandsNextConfiguration()
 {
     StringPrefixes = new[] { prefix },
@@ -63,20 +71,20 @@ builder.Build().Run();
 file sealed class ApplicationHost : BackgroundService
 {
     private readonly DiscordClient _discordClient;
-    private readonly IAudioService _audioService;
-
-    public ApplicationHost(DiscordClient discordClient, IAudioService audioService,CommandsNextConfiguration commands)
+    public ApplicationHost(DiscordClient discordClient, CommandsNextConfiguration commands,SlashCommandsConfiguration slashCommands)
     {
         ArgumentNullException.ThrowIfNull(discordClient);
-        ArgumentNullException.ThrowIfNull(audioService);
 
         _discordClient = discordClient;
-        _audioService = audioService;
+       
         
         var command = _discordClient.UseCommandsNext(commands);
+        
+        var slashCommand = _discordClient.UseSlashCommands(slashCommands);
+        slashCommand.RegisterCommands<SlashCommandController>();
+        command.RegisterCommands<TextCommandController>();
+        command.RegisterCommands<VoiceCommandsController>();
 
-        command.RegisterCommands<TextCommands>();
-        command.RegisterCommands<VoiceCommands>();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -97,19 +105,6 @@ file sealed class ApplicationHost : BackgroundService
         _discordClient.Ready += SetResult;
         await readyTaskCompletionSource.Task.ConfigureAwait(false);
         _discordClient.Ready -= SetResult;
-
-
-        var playerOptions = new LavalinkPlayerOptions
-        {
-            InitialTrack = new TrackQueueItem(new TrackReference("https://youtu.be/5TAko3RH0bk?si=FAEruVa4ibgPklmh")),
-        };
-
-        //await _audioService.StartAsync();
-        //await Task.Delay(3000);
-
-        //await _audioService.Players
-        //    .JoinAsync(1072078275305811988, 1072078275305811992, playerOptions, stoppingToken) // Ids
-        //    .ConfigureAwait(false);
-
+        
     }
 }
