@@ -47,6 +47,16 @@ public class SlashCommandController : ApplicationCommandModule
     {
         await ctx.DeferAsync();
         var message = await _VoiceCommands.Play(ctx.Member, query);
+
+        if (message is null)
+        {
+            message = new DiscordEmbedBuilder()
+            {
+                Description = "No music found",
+                Color = DiscordColor.Red
+            };
+            
+        }
         await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(message));
     }
 

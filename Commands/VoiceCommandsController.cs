@@ -74,7 +74,27 @@ namespace Dobby.Commands
 
             await _commands.Leave(ctx.Member);
         }
-
+        
+        [Command("q")]
+        public async Task Queue(CommandContext ctx)
+        {
+            var embed = await _commands.ViewQueue(ctx.Member);
+            await ctx.RespondAsync(embed: embed);
+        }
+        
+        [Command("rm")]
+        public async Task Remove(CommandContext ctx, int position)
+        {
+            var embed = await _commands.RemoveFromQueue(ctx.Member, position);
+            await ctx.RespondAsync(embed: embed);
+        }
+        
+        [Command("insert")]
+        public async Task Insert(CommandContext ctx, [RemainingText] string query,int position = 1)
+        {
+            var embed = await _commands.Play(ctx.Member, query,position);
+            await ctx.RespondAsync(embed: embed);
+        }
 
     }
 }

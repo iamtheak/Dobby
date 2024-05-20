@@ -35,12 +35,23 @@ public class VoiceCommands
         var track = await _audioService.Tracks
             .LoadTrackAsync(query, TrackSearchMode.YouTube)
             .ConfigureAwait(false);
+        return track;
+    }
+    private async Task<LavalinkTrack> SearchTrackFromSpotify(string query)
+    {
+        var track = await _audioService.Tracks
+            .LoadTrackAsync(query, TrackSearchMode.Spotify)
+            .ConfigureAwait(false);
 
         return track;
     }
 
-    private async Task<DiscordEmbed> PLayMusic(LavalinkTrack track, QueuedLavalinkPlayer player)
+    private async Task<DiscordEmbed> PLayMusic(LavalinkTrack track, QueuedLavalinkPlayer player,bool start = false)
     {
+        if (start)
+        {
+            await player.PlayAsync(new TrackReference(track),enqueue: false);
+        }
         await player.PlayAsync(new TrackReference(track));
         var queue = player.Queue;
         
@@ -53,7 +64,10 @@ public class VoiceCommands
         return embed;
     }
 
-    public async Task<DiscordEmbed> Play(DiscordMember member, string query)
+   
+
+
+    public async Task<DiscordEmbed> Play(DiscordMember member, string query,int postion = -1)
     {
 
         var embed = new DiscordEmbedBuilder();
@@ -78,13 +92,23 @@ public class VoiceCommands
         var player = response.Item1;
 
         var track = await SearchTrackFromYoutube(query: query) ?? null;
-
-
+        track = track == null ? await SearchTrackFromSpotify(query): track;
+      
         if (track != null)
         {
-           var musicResp =  await PLayMusic(track: track, player: player);
-           return musicResp;
 
+            if (postion != -1)
+            {
+                await player.Queue.InsertAsync(postion -1, new TrackQueueItem(track));
+            
+                embed.Description = $"🔈 Queued: {track.Title} By: {track.Author} at position {postion}";
+                embed.Color = DiscordColor.SapGreen;
+            
+                return embed;
+            }
+            var musicResp =  await PLayMusic(track: track, player: player);
+            return musicResp;
+           
         }
         
         embed.Description = "😖 No results.";
@@ -161,7 +185,8 @@ public class VoiceCommands
 
     }
     
-    public async Task<DiscordEmbed> Queue(DiscordMember member)
+    
+    public async Task<DiscordEmbed> ViewQueue(DiscordMember member)
     {
         var embed = new DiscordEmbedBuilder();
         var response = GetPlayerAsync(member.Guild.Id, member.VoiceState.Channel.Id, connectToVoiceChannel: false).Result;
@@ -190,6 +215,75 @@ public class VoiceCommands
 
         return embed;
     }
+
+
+    public async Task<DiscordEmbed> RemoveFromQueue(DiscordMember member,int position)
+    {
+        var embed = new DiscordEmbedBuilder();
+        var response = GetPlayerAsync(member.Guild.Id, member.VoiceState.Channel.Id, connectToVoiceChannel: false).Result;
+        if (response.Item1 is null)
+        {
+            embed.Description = response.Item2;
+            embed.Color = DiscordColor.Red;
+            return embed;
+        }
+
+        var player = response.Item1;
+        
+        if (player.Queue.Count == 0)
+        {
+            embed.Description = "The queue is empty.";
+            embed.Color = DiscordColor.Red;
+            return embed;
+        }
+        
+        if (position < 1 || position > player.Queue.Count)
+        {
+            embed.Description = "Invalid position.";
+            embed.Color = DiscordColor.Red;
+            return embed;
+        }
+
+
+        await player.Queue.RemoveAtAsync(position - 1);
+        
+        
+        embed.Description = $"Removed track at position {position}.";
+        embed.Color = DiscordColor.SapGreen;
+
+        return embed;
+    }
+    
+    
+    public async Task<DiscordEmbed> ClearQueue(DiscordMember member)
+    {
+        var embed = new DiscordEmbedBuilder();
+        var response = GetPlayerAsync(member.Guild.Id, member.VoiceState.Channel.Id, connectToVoiceChannel: false).Result;
+        if (response.Item1 is null)
+        {
+            embed.Description = response.Item2;
+            embed.Color = DiscordColor.Red;
+            return embed;
+        }
+
+        var player = response.Item1;
+        
+        if (player.Queue.Count == 0)
+        {
+            embed.Description = "The queue is empty.";
+            embed.Color = DiscordColor.Red;
+            return embed;
+        }
+
+        await player.Queue.ClearAsync();
+        
+        embed.Description = "Cleared the queue.";
+        embed.Color = DiscordColor.SapGreen;
+
+        return embed;
+    }
+    
+    
     private async ValueTask<(QueuedLavalinkPlayer?, string)> GetPlayerAsync(ulong guildId, ulong channelId,
         bool connectToVoiceChannel = true)
     {

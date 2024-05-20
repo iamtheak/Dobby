@@ -84,7 +84,6 @@ file sealed class ApplicationHost : BackgroundService
         slashCommand.RegisterCommands<SlashCommandController>();
         command.RegisterCommands<TextCommandController>();
         command.RegisterCommands<VoiceCommandsController>();
-
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
